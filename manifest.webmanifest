@@ -1,0 +1,23 @@
+{
+  "name": "Recapitulare · Școala duminicală",
+  "short_name": "Recapitulare",
+  "description": "Recapitularea semestrului 1 la școala duminicală: opt lecții, trei moduri de joc.",
+  "lang": "ro",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4F7FB",
+  "theme_color": "#2B5CA8",
+  "categories": ["education"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Ecran de clasă", "short_name": "Ecran", "url": "./?ecran",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

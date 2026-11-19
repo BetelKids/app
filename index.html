@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Recapitulare · Școala duminicală</title>
+<meta name="description" content="Recapitularea semestrului 1 la școala duminicală: trei moduri de joc peste cele opt lecții.">
+<meta name="theme-color" content="#2B5CA8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Recapitulare">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+  :root { --albastru: #2B5CA8; --cerneala: #22303F; --sters: #6B7A8D; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; overscroll-behavior: none; background: #F4F7FB; }
+  body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: var(--cerneala); }
+
+  #cadru { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: #F4F7FB; }
+
+  /* ecranul de pornire */
+  #splash { position: fixed; inset: 0; z-index: 10; background: #F4F7FB; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 1rem; padding: 2rem; text-align: center;
+            transition: opacity .35s ease; }
+  #splash.pleaca { opacity: 0; pointer-events: none; }
+  #splash img { width: 92px; height: 92px; border-radius: 22px; box-shadow: 0 8px 28px rgba(34,48,63,.18); }
+  #splash h1 { font-size: 1.35rem; margin: .4rem 0 0; }
+  #splash p { color: var(--sters); margin: 0; font-size: .95rem; }
+  .rotitor { width: 34px; height: 34px; border: 4px solid #C9DAF2; border-top-color: var(--albastru);
+             border-radius: 50%; animation: rotire .8s linear infinite; margin-top: .5rem; }
+  @keyframes rotire { to { transform: rotate(360deg); } }
+
+  /* panoul de eroare */
+  #eroare { max-width: 24rem; display: none; }
+  #eroare.vizibil { display: block; }
+  #eroare a, .buton { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 46px;
+    padding: .6rem 1.2rem; border-radius: 12px; background: var(--albastru); color: #fff; font-weight: 700;
+    text-decoration: none; border: 0; font-size: 1rem; cursor: pointer; margin-top: .8rem; font-family: inherit; }
+  .buton.sters { background: #fff; color: var(--cerneala); border: 1.5px solid #DEE6EF; }
+
+  /* bara de instalare */
+  #instalare { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: none; gap: .6rem;
+    align-items: center; background: #fff; border-top: 1.5px solid #DEE6EF; padding: .7rem .9rem;
+    padding-bottom: calc(.7rem + env(safe-area-inset-bottom)); box-shadow: 0 -4px 18px rgba(34,48,63,.08); }
+  #instalare.vizibil { display: flex; }
+  #instalare img { width: 40px; height: 40px; border-radius: 10px; }
+  #instalare .text { flex: 1; min-width: 0; font-size: .88rem; line-height: 1.3; }
+  #instalare .text b { display: block; font-size: .95rem; }
+  #instalare button { min-height: 40px; padding: .4rem .9rem; border-radius: 10px; font-weight: 700; font-size: .9rem;
+    border: 0; background: var(--albastru); color: #fff; cursor: pointer; font-family: inherit; }
+  #instalare .inchide { background: none; color: var(--sters); font-size: 1.3rem; padding: 0 .4rem; min-height: 32px; }
+</style>
+</head>
+<body>
+
+<div id="loc-cadru"></div>
+
+<div id="splash">
+  <img src="icons/icon-192.png" alt="">
+  <h1 id="splash-titlu">Recapitulare</h1>
+  <p>Semestrul 1 · Școala duminicală</p>
+  <div class="rotitor" id="rotitor"></div>
+  <div id="eroare">
+    <p style="font-weight:700;color:#C0392B">Aplicația nu s-a încărcat.</p>
+    <p>Verifică legătura la internet, apoi încearcă din nou.</p>
+    <button class="buton" id="btn-reincarca" type="button">Încearcă din nou</button>
+    <br><a class="buton sters" id="btn-direct" href="#" target="_blank" rel="noopener">Deschide direct</a>
+  </div>
+</div>
+
+<div id="instalare">
+  <img src="icons/icon-192.png" alt="">
+  <div class="text"><b>Pune aplicația pe telefon</b><span id="instalare-text">Se deschide ca o aplicație obișnuită, fără browser.</span></div>
+  <button id="btn-instalez" type="button">Instalează</button>
+  <button class="inchide" id="btn-nu" type="button" aria-label="Închide">✕</button>
+</div>
+
+<script src="config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var C = window.CONFIG_APP || {};
+  var cadru = document.createElement('iframe');
+  cadru.id = 'cadru';
+  cadru.title = 'Recapitulare · Școala duminicală';
+  cadru.setAttribute('allow', 'clipboard-write; fullscreen; autoplay');
+  var splash = document.getElementById('splash');
+  var eroare = document.getElementById('eroare');
+  var rotitor = document.getElementById('rotitor');
+
+  document.getElementById('splash-titlu').textContent = C.numeScurt || 'Recapitulare';
+
+  /* ---------- adresa încărcată în cadru ---------- */
+  // ?ecran (sau #ecran) deschide pagina de proiector a aplicației
+  var cautare = location.search + location.hash;
+  var ecran = /(\?|&|#)ecran\b/.test(cautare);
+  var adresa = String(C.url || '');
+  if (!adresa || adresa.indexOf('PUNE-AICI') >= 0) {
+    document.getElementById('btn-direct').style.display = 'none';
+    aratăEroare('Adresa aplicației nu este completată.',
+      'Deschide fișierul config.js din depozit și pune acolo adresa /exec a aplicației publicate.');
+  } else {
+    if (ecran) adresa += (adresa.indexOf('?') >= 0 ? '&' : '?') + 'page=ecran';
+    document.getElementById('btn-direct').href = adresa;
+    cadru.src = adresa;
+  }
+  document.getElementById('loc-cadru').appendChild(cadru);
+
+  var incarcat = false, confirmat = false;
+
+  function aratăEroare(titlu, text) {
+    rotitor.style.display = 'none';
+    splash.classList.remove('pleaca');
+    splash.style.display = 'flex';
+    eroare.classList.add('vizibil');
+    eroare.children[0].textContent = titlu;
+    eroare.children[1].textContent = text;
+  }
+  function fărăInternet() {
+    aratăEroare('Nu ai internet.',
+      'Testele se încarcă de pe internet. Pagina pornește din nou singură când revine semnalul.');
+  }
+
+  function ascundeSplash() {
+    splash.classList.add('pleaca');
+    setTimeout(function () { splash.style.display = 'none'; }, 400);
+  }
+
+  // Aplicația ne trimite un semnal când a pornit cu adevărat. Evenimentul „load” al cadrului
+  // nu e de ajuns: browserul îl emite și pentru propria lui pagină de eroare.
+  window.addEventListener('message', function (e) {
+    if (e.data && e.data.app === 'scoala-duminicala' && e.data.gata) {
+      confirmat = true; incarcat = true;
+      ascundeSplash();
+    }
+  });
+
+  cadru.addEventListener('load', function () {
+    if (navigator.onLine === false) { fărăInternet(); return; }
+    incarcat = true;
+    ascundeSplash();
+  });
+
+  if (navigator.onLine === false) fărăInternet();
+  window.addEventListener('online', function () { if (!confirmat) location.reload(); });
+  window.addEventListener('offline', function () { if (!confirmat) fărăInternet(); });
+
+  // dacă în 12 secunde nu a venit niciun semn de viață, arătăm o ieșire
+  setTimeout(function () {
+    if (confirmat) return;
+    if (navigator.onLine === false) fărăInternet();
+    else aratăEroare('Aplicația nu s-a încărcat.',
+      'Verifică adresa din config.js și dacă aplicația este publicată cu acces „Oricine”.');
+  }, 12000);
+
+  document.getElementById('btn-reincarca').addEventListener('click', function () { location.reload(); });
+
+  /* ---------- instalarea ca aplicație ---------- */
+  var promptInstalare = null;
+  var bara = document.getElementById('instalare');
+  var AMANAT = 'sd_instalare_amanata';
+
+  function amanat() {
+    try { return Number(localStorage.getItem(AMANAT) || 0) > Date.now(); } catch (e) { return false; }
+  }
+  function amana(zile) {
+    try { localStorage.setItem(AMANAT, String(Date.now() + zile * 864e5)); } catch (e) { }
+  }
+  function esteInstalata() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    promptInstalare = e;
+    if (!esteInstalata() && !amanat()) bara.classList.add('vizibil');
+  });
+
+  document.getElementById('btn-instalez').addEventListener('click', function () {
+    if (!promptInstalare) { amana(7); bara.classList.remove('vizibil'); return; }
+    promptInstalare.prompt();
+    promptInstalare.userChoice.then(function () {
+      promptInstalare = null;
+      bara.classList.remove('vizibil');
+    });
+  });
+  document.getElementById('btn-nu').addEventListener('click', function () { amana(14); bara.classList.remove('vizibil'); });
+  window.addEventListener('appinstalled', function () { bara.classList.remove('vizibil'); });
+
+  // pe iPhone nu există beforeinstallprompt: arătăm instrucțiunea
+  var esteIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if (esteIos && !esteInstalata() && !amanat()) {
+    document.getElementById('instalare-text').textContent = 'Apasă „Distribuie”, apoi „Adaugă la ecranul principal”.';
+    document.getElementById('btn-instalez').style.display = 'none';
+    setTimeout(function () { bara.classList.add('vizibil'); }, 2500);
+  }
+
+  /* ---------- lucrătorul de serviciu (PWA) ---------- */
+  if ('serviceWorker' in navigator && window.isSecureContext) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () { /* merge și fără */ });
+    });
+  }
+})();
+</script>
+</body>
+</html>
